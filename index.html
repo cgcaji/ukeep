@@ -14,9 +14,9 @@
       --text: #333333;
       --primary: #2563eb;
       --primary-dark: #1d4ed8;
-      --success: #d4f8e8;
+      --success-bg: #d4f8e8;
       --success-text: #217a3a;
-      --error: #ffdede;
+      --error-bg: #ffdede;
       --error-text: #991b1b;
       --muted: #64748b;
       --border: #dddddd;
@@ -27,46 +27,56 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
       -webkit-font-smoothing: antialiased;
     }
 
+    /* ---------- Layout ---------- */
     #app {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+
+    header {
+      background: linear-gradient(to right, #17365d, #2563eb);
+      color: white;
+      padding: 16px 20px;
+      margin: -24px -20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+    }
+
+    header .user-info {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .container {
       background: var(--panel);
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      padding: 32px;
-      max-width: 640px;
-      width: 100%;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      padding: 24px;
     }
 
-    h1 {
-      font-size: 1.5rem;
-      color: #0f172a;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-bottom: 24px;
-    }
-
+    /* ---------- States ---------- */
     .state {
       padding: 20px;
       border-radius: 8px;
-      margin-top: 16px;
       background: #f1f5f9;
       font-size: 0.95rem;
       line-height: 1.5;
     }
-
-    .state.error { background: var(--error); color: var(--error-text); }
-    .state.success { background: var(--success); color: var(--success-text); }
+    .state.error { background: var(--error-bg); color: var(--error-text); }
+    .state.success { background: var(--success-bg); color: var(--success-text); }
     .state.loading { background: #eff6ff; color: #1e40af; }
+    .state.empty { color: var(--muted); font-style: italic; }
 
     .spinner {
       border: 3px solid #e2e8f0;
@@ -79,18 +89,139 @@
       vertical-align: middle;
       margin-right: 10px;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .profile-badge {
+    /* ---------- Menu (coordinator) ---------- */
+    .menu {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .menu button {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .menu button:hover {
+      background: #eff6ff;
+      border-color: var(--primary);
+    }
+
+    .menu button.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* ---------- Cards ---------- */
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      background: white;
+      transition: box-shadow 0.15s;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+
+    .card .meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .card .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    .btn-danger {
+      background: var(--error-bg);
+      color: var(--error-text);
+    }
+    .btn-danger:hover { background: #fbb; }
+
+    /* ---------- Form ---------- */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+
+    .form-group input:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: -2px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    /* ---------- Profile badge ---------- */
+    .badge {
       display: inline-block;
       padding: 4px 10px;
       border-radius: 12px;
       background: #eff6ff;
       color: var(--primary-dark);
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 600;
-      margin-top: 8px;
+      margin-left: 8px;
     }
 
     code {
@@ -102,37 +233,19 @@
   </style>
 </head>
 <body>
-  <div id="app">
-    <h1>Manutenção Predial</h1>
-    <p class="subtitle">Sistema de gestão de manutenção dos Salões do Reino</p>
-
-    <div id="content">
-      <div class="state loading">
-        <span class="spinner"></span> Iniciando...
-      </div>
-    </div>
-  </div>
+  <div id="app"></div>
 
   <script>
     // ------------------------------------------------------------
     // CONFIG
     // ------------------------------------------------------------
-
-    // Orchestrator base URL (MVP: single orchestrator, hardcoded)
     const ORCHESTRATOR_URL = 'https://script.google.com/macros/s/AKfycbxSFKTksvmFI-oIPU3r1GaMlNaAn2zD3PfdwFmgfSwKrJUapemwOD0DXPufwu3uDB5d1A/exec';
 
     // ------------------------------------------------------------
     // HELPERS
     // ------------------------------------------------------------
-
     function getQueryParam(name) {
-      const params = new URLSearchParams(window.location.search);
-      return params.get(name);
-    }
-
-    function render(html, stateClass) {
-      const content = document.getElementById('content');
-      content.innerHTML = '<div class="state ' + (stateClass || '') + '">' + html + '</div>';
+      return new URLSearchParams(window.location.search).get(name);
     }
 
     function buildUrl(action, extraParams) {
@@ -147,89 +260,44 @@
       return ORCHESTRATOR_URL + '?' + parts.join('&');
     }
 
-    // ------------------------------------------------------------
-    // API CALL
-    // ------------------------------------------------------------
-
-    async function callApi(action, params) {
+    async function apiCall(action, params) {
       const url = buildUrl(action, params);
-
       try {
-        const response = await fetch(url, {
-          method: 'GET',
-          mode: 'cors',
-          redirect: 'follow'
-        });
-
-        if (!response.ok) {
-          return { success: false, error: 'http_' + response.status };
-        }
-
+        const response = await fetch(url, { method: 'GET', mode: 'cors', redirect: 'follow' });
+        if (!response.ok) return { success: false, error: 'http_' + response.status };
         const text = await response.text();
-
-        // Try to parse as JSON; if it fails, return raw text
-        try {
-          return JSON.parse(text);
-        } catch (e) {
-          return { success: true, raw: text };
-        }
-
+        try { return JSON.parse(text); } catch (e) { return { success: true, raw: text }; }
       } catch (err) {
-        return {
-          success: false,
-          error: 'network_error',
-          message: err.message
-        };
+        return { success: false, error: 'network_error', message: err.message };
       }
     }
 
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     // ------------------------------------------------------------
-    // MAIN FLOW
+    // SESSION
     // ------------------------------------------------------------
+    const Session = {
+      get: function (key) { return sessionStorage.getItem(key); },
+      set: function (key, value) { sessionStorage.setItem(key, value); },
+      clear: function () { sessionStorage.clear(); },
+      isLogged: function () { return !!sessionStorage.getItem('session_token'); }
+    };
 
-    async function init() {
-      const key = getQueryParam('k');
+    // ------------------------------------------------------------
+    // RENDER
+    // ------------------------------------------------------------
+    function render(html) {
+      document.getElementById('app').innerHTML = html;
+    }
 
-      // No key → welcome message
-      if (!key) {
-        render(
-          '<strong>Bem-vindo.</strong><br><br>' +
-          'Para acessar o sistema, use o link enviado pelo seu coordenador ' +
-          'ou supervisor.<br><br>' +
-          'O link contém uma chave pessoal no formato <code>?k=...</code>.',
-          'success'
-        );
-        return;
-      }
-
-      // Has key → authenticate
-      render('<span class="spinner"></span> Autenticando...', 'loading');
-
-      const result = await callApi('auth', { k: key });
-
-      // Error handling
-      if (!result.success) {
-        let message = 'Não foi possível autenticar.';
-
-        if (result.error === 'network_error') {
-          message += '<br><br>Erro de rede ou bloqueio do navegador.';
-          if (result.message) {
-            message += '<br><br><small style="opacity:.7;">' + result.message + '</small>';
-          }
-        } else if (result.error === 'invalid_key') {
-          message += '<br><br>A chave é inválida ou expirou.';
-          message += '<br>Solicite um novo link ao seu coordenador ou supervisor.';
-        } else {
-          message += '<br><br><small style="opacity:.7;">Erro: ' + (result.error || 'desconhecido') + '</small>';
-        }
-
-        render(message, 'error');
-        return;
-      }
-
-      // Success → route by profile
-      const profile = result.profile || 'unknown';
-
+    function renderHeader() {
+      const profile = Session.get('profile') || '';
+      const person = Session.get('person_id') || '';
       let profileLabel = profile;
       if (profile === 'coordinator') profileLabel = 'Coordenador';
       else if (profile === 'supervisor') profileLabel = 'Supervisor';
@@ -237,20 +305,367 @@
       else if (profile === 'assistant') profileLabel = 'Ajudante';
       else if (profile === 'substitute') profileLabel = 'Substituto';
 
+      return '<header>' +
+        '<h1>Manutenção Predial</h1>' +
+        '<div class="user-info">' +
+          (person ? 'Usuário #' + esc(person) + ' ' : '') +
+          '<span class="badge">' + esc(profileLabel) + '</span>' +
+        '</div>' +
+      '</header>';
+    }
+
+    function renderLogin() {
       render(
-        '<strong>Bem-vindo!</strong><br><br>' +
-        'Você está autenticado no sistema.' +
-        '<br><span class="profile-badge">' + profileLabel + '</span>' +
-        '<br><br>' +
-        'As telas de operação estarão disponíveis nas próximas fases.',
-        'success'
+        '<div class="container">' +
+          '<h1>Manutenção Predial</h1>' +
+          '<p style="color:var(--muted); margin-bottom: 24px;">Sistema de gestão de manutenção dos Salões do Reino</p>' +
+          '<div class="state success">' +
+            '<strong>Bem-vindo.</strong><br><br>' +
+            'Para acessar o sistema, use o link enviado pelo seu coordenador ' +
+            'ou supervisor.<br><br>' +
+            'O link contém uma chave pessoal no formato <code>?k=...</code>.' +
+          '</div>' +
+        '</div>'
       );
+    }
+
+    function renderError(message) {
+      render(
+        '<div class="container">' +
+          '<h1>Manutenção Predial</h1>' +
+          '<div class="state error" style="margin-top: 24px;">' +
+            message +
+            '<br><br>' +
+            '<button class="btn btn-secondary" onclick="logout()">Voltar</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    // ------------------------------------------------------------
+    // AUTHENTICATION FLOW
+    // ------------------------------------------------------------
+    async function init() {
+      // If already logged, route based on profile
+      if (Session.isLogged()) {
+        routeToProfile();
+        return;
+      }
+
+      const key = getQueryParam('k');
+
+      if (!key) {
+        renderLogin();
+        return;
+      }
+
+      // Authenticate
+      render(
+        '<div class="container">' +
+          '<div class="state loading" style="margin-top: 24px;">' +
+            '<span class="spinner"></span> Autenticando...' +
+          '</div>' +
+        '</div>'
+      );
+
+      const result = await apiCall('auth', { k: key });
+
+      if (!result.success) {
+        let message = 'Não foi possível autenticar.';
+        if (result.error === 'invalid_key') {
+          message += '<br><br>A chave é inválida ou expirou.';
+          message += '<br>Solicite um novo link ao seu coordenador ou supervisor.';
+        } else if (result.error === 'network_error') {
+          message += '<br><br>Erro de rede ou bloqueio do navegador.';
+        } else {
+          message += '<br><br><small>Erro: ' + esc(result.error || 'desconhecido') + '</small>';
+        }
+        renderError(message);
+        return;
+      }
+
+      // Store session
+      Session.set('session_token', result.session_token);
+      Session.set('profile', result.profile);
+      Session.set('person_id', result.person_id);
+      if (result.source) Session.set('source', result.source);
+      if (result.property_id) Session.set('property_id', result.property_id);
+      if (result.property_name) Session.set('property_name', result.property_name);
+      if (result.spreadsheet_id) Session.set('spreadsheet_id', result.spreadsheet_id);
+
+      routeToProfile();
+    }
+
+    function routeToProfile() {
+      const profile = Session.get('profile');
+
+      if (profile === 'coordinator') {
+        renderCoordinatorHome();
+      } else if (profile === 'supervisor') {
+        renderSupervisorHome();
+      } else if (profile === 'assignee') {
+        renderAssigneeHome();
+      } else if (profile === 'assistant') {
+        renderAssistantHome();
+      } else if (profile === 'substitute') {
+        renderSupervisorHome();  // substitute has supervisor powers
+      } else {
+        renderError('Perfil desconhecido: ' + esc(profile));
+      }
+    }
+
+    // ------------------------------------------------------------
+    // COORDINATOR VIEWS
+    // ------------------------------------------------------------
+    function renderCoordinatorHome() {
+      render(
+        renderHeader() +
+        '<div class="container">' +
+          '<div class="menu">' +
+            '<button class="active" onclick="showCoordinatorProperties()">Meus imóveis</button>' +
+            '<button onclick="showCoordinatorNewProperty()">Cadastrar imóvel</button>' +
+            '<button onclick="logout()">Sair</button>' +
+          '</div>' +
+          '<div id="content"></div>' +
+        '</div>'
+      );
+      showCoordinatorProperties();
+    }
+
+    async function showCoordinatorProperties() {
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="state loading"><span class="spinner"></span> Carregando imóveis...</div>';
+
+      const result = await apiCall('listProperties', { sessionToken: Session.get('session_token') });
+
+      if (!result.success) {
+        content.innerHTML = '<div class="state error">Erro ao carregar imóveis: ' + esc(result.error) + '</div>';
+        return;
+      }
+
+      const properties = result.properties || [];
+
+      if (properties.length === 0) {
+        content.innerHTML = '<div class="state empty">Nenhum imóvel cadastrado ainda. Clique em "Cadastrar imóvel" para começar.</div>';
+        return;
+      }
+
+      let html = '';
+      properties.forEach(function (p) {
+        html +=
+          '<div class="card">' +
+            '<h3>' + esc(p.name) + '</h3>' +
+            '<div class="meta">' +
+              esc(p.address) +
+              '<br>Supervisor: ' + esc(p.supervisor_name) + ' (' + esc(p.supervisor_email) + ')' +
+            '</div>' +
+            '<div class="actions">' +
+              '<button class="btn btn-primary" onclick="showPropertyDetail(' + p.id + ')">Ver detalhes</button>' +
+            '</div>' +
+          '</div>';
+      });
+      content.innerHTML = html;
+    }
+
+    function showCoordinatorNewProperty() {
+      const content = document.getElementById('content');
+      content.innerHTML =
+        '<h2 style="margin-bottom: 20px;">Cadastrar novo imóvel</h2>' +
+        '<div class="form-group">' +
+          '<label>Nome do imóvel *</label>' +
+          '<input type="text" id="new_property_name" placeholder="Ex: Salão Central">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Endereço *</label>' +
+          '<input type="text" id="new_property_address" placeholder="Rua ..., 123 - Cidade/UF">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Coordenadas (opcional)</label>' +
+          '<input type="text" id="new_property_coords" placeholder="-23.5505, -46.6333">' +
+        '</div>' +
+        '<h3 style="margin-top: 24px; margin-bottom: 12px;">Supervisor</h3>' +
+        '<div class="form-group">' +
+          '<label>Nome do supervisor *</label>' +
+          '<input type="text" id="new_supervisor_name">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>E-mail do supervisor *</label>' +
+          '<input type="email" id="new_supervisor_email">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Telefone do supervisor *</label>' +
+          '<input type="text" id="new_supervisor_phone" placeholder="+5511999999999">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>' +
+            '<input type="checkbox" id="new_supervisor_whatsapp" checked style="width:auto; margin-right:6px;">' +
+            'Telefone é WhatsApp' +
+          '</label>' +
+        '</div>' +
+        '<div class="form-actions">' +
+          '<button class="btn btn-secondary" onclick="showCoordinatorProperties()">Cancelar</button>' +
+          '<button class="btn btn-primary" onclick="submitNewProperty()">Fazer deploy</button>' +
+        '</div>';
+    }
+
+    async function submitNewProperty() {
+      const name = document.getElementById('new_property_name').value.trim();
+      const address = document.getElementById('new_property_address').value.trim();
+      const coords = document.getElementById('new_property_coords').value.trim();
+      const supName = document.getElementById('new_supervisor_name').value.trim();
+      const supEmail = document.getElementById('new_supervisor_email').value.trim();
+      const supPhone = document.getElementById('new_supervisor_phone').value.trim();
+      const supWhatsApp = document.getElementById('new_supervisor_whatsapp').checked;
+
+      if (!name || !address || !supName || !supEmail || !supPhone) {
+        alert('Preencha todos os campos obrigatórios.');
+        return;
+      }
+
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="state loading"><span class="spinner"></span> Fazendo deploy... isso pode levar 30 segundos.</div>';
+
+      // NOTE: For MVP, this uses a workaround since we cannot POST long payloads easily.
+      // We pass everything as query string.
+      const result = await apiCall('createProperty', {
+        sessionToken: Session.get('session_token'),
+        property_name: name,
+        property_address: address,
+        property_coordinates: coords,
+        supervisor_name: supName,
+        supervisor_email: supEmail,
+        supervisor_phone: supPhone,
+        supervisor_phone_whatsapp: supWhatsApp
+      });
+
+      if (!result.success) {
+        content.innerHTML = '<div class="state error">Erro no deploy: ' + esc(result.error) + '</div>' +
+          '<div class="form-actions"><button class="btn btn-secondary" onclick="showCoordinatorProperties()">Voltar</button></div>';
+        return;
+      }
+
+      content.innerHTML =
+        '<div class="state success">' +
+          '<strong>Deploy concluído!</strong><br><br>' +
+          'Imóvel: ' + esc(name) + '<br>' +
+          'Supervisor: ' + esc(supName) + ' (' + esc(supEmail) + ')<br>' +
+          'E-mail enviado.<br><br>' +
+          '<small>ID do imóvel: ' + esc(result.property_id) + '</small>' +
+        '</div>' +
+        '<div class="form-actions">' +
+          '<button class="btn btn-primary" onclick="showCoordinatorProperties()">Voltar para a lista</button>' +
+        '</div>';
+    }
+
+    async function showPropertyDetail(propertyId) {
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="state loading"><span class="spinner"></span> Carregando...</div>';
+
+      const result = await apiCall('getProperty', {
+        sessionToken: Session.get('session_token'),
+        propertyId: propertyId
+      });
+
+      if (!result.success) {
+        content.innerHTML = '<div class="state error">Erro: ' + esc(result.error) + '</div>' +
+          '<div class="form-actions"><button class="btn btn-secondary" onclick="showCoordinatorProperties()">Voltar</button></div>';
+        return;
+      }
+
+      const p = result.property;
+      content.innerHTML =
+        '<h2 style="margin-bottom: 16px;">' + esc(p.name) + '</h2>' +
+        '<div class="card">' +
+          '<div class="meta">' +
+            '<strong>Endereço:</strong> ' + esc(p.address) + '<br>' +
+            '<strong>Coordenadas:</strong> ' + esc(p.coordinates || '(não informado)') + '<br>' +
+            '<strong>Supervisor:</strong> ' + esc(p.supervisor_name) + '<br>' +
+            '<strong>E-mail:</strong> ' + esc(p.supervisor_email) + '<br>' +
+            '<strong>Telefone:</strong> ' + esc(p.supervisor_phone) + '<br>' +
+            '<strong>Spreadsheet:</strong> <code>' + esc(p.spreadsheet_id) + '</code><br>' +
+            '<strong>Criado em:</strong> ' + esc(p.created_at) +
+          '</div>' +
+        '</div>' +
+        '<div class="form-actions">' +
+          '<button class="btn btn-secondary" onclick="showCoordinatorProperties()">Voltar</button>' +
+        '</div>';
+    }
+
+    // ------------------------------------------------------------
+    // SUPERVISOR VIEWS
+    // ------------------------------------------------------------
+    function renderSupervisorHome() {
+      const propertyName = Session.get('property_name') || '(imóvel)';
+      render(
+        renderHeader() +
+        '<div class="container">' +
+          '<h2>' + esc(propertyName) + '</h2>' +
+          '<p style="color:var(--muted); margin-bottom: 24px;">Você é supervisor deste imóvel.</p>' +
+          '<div class="state success">' +
+            '<strong>Acesso confirmado.</strong><br><br>' +
+            'As funcionalidades do supervisor (campanhas, pessoas, acompanhamento) ' +
+            'estarão disponíveis nas próximas fases.' +
+          '</div>' +
+          '<div class="form-actions">' +
+            '<button class="btn btn-secondary" onclick="logout()">Sair</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    // ------------------------------------------------------------
+    // ASSIGNEE / ASSISTANT VIEWS
+    // ------------------------------------------------------------
+    function renderAssigneeHome() {
+      const propertyName = Session.get('property_name') || '(imóvel)';
+      render(
+        renderHeader() +
+        '<div class="container">' +
+          '<h2>' + esc(propertyName) + '</h2>' +
+          '<p style="color:var(--muted); margin-bottom: 24px;">Você é encarregado de inspeções neste imóvel.</p>' +
+          '<div class="state success">' +
+            '<strong>Acesso confirmado.</strong><br><br>' +
+            'Suas tarefas de inspeção estarão disponíveis nas próximas fases.' +
+          '</div>' +
+          '<div class="form-actions">' +
+            '<button class="btn btn-secondary" onclick="logout()">Sair</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function renderAssistantHome() {
+      const propertyName = Session.get('property_name') || '(imóvel)';
+      render(
+        renderHeader() +
+        '<div class="container">' +
+          '<h2>' + esc(propertyName) + '</h2>' +
+          '<p style="color:var(--muted); margin-bottom: 24px;">Você é ajudante neste imóvel.</p>' +
+          '<div class="state success">' +
+            '<strong>Acesso confirmado.</strong>' +
+          '</div>' +
+          '<div class="form-actions">' +
+            '<button class="btn btn-secondary" onclick="logout()">Sair</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    // ------------------------------------------------------------
+    // LOGOUT
+    // ------------------------------------------------------------
+    function logout() {
+      Session.clear();
+      // Remove k from URL if present
+      const url = new URL(window.location.href);
+      url.searchParams.delete('k');
+      window.history.replaceState({}, '', url.pathname + url.search);
+      renderLogin();
     }
 
     // ------------------------------------------------------------
     // BOOT
     // ------------------------------------------------------------
-
     init();
   </script>
 </body>
