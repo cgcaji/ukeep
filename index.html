@@ -3,157 +3,200 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Manutenção Predial</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f4f4f4;
+      --panel: #ffffff;
+      --text: #333333;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success: #d4f8e8;
+      --success-text: #217a3a;
+      --error: #ffdede;
+      --error-text: #991b1b;
+      --muted: #64748b;
+      --border: #dddddd;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f8fafc;
-      color: #1e293b;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
+      -webkit-font-smoothing: antialiased;
     }
-    .container {
-      background: white;
+
+    #app {
+      background: var(--panel);
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       padding: 32px;
       max-width: 640px;
       width: 100%;
     }
+
     h1 {
       font-size: 1.5rem;
       color: #0f172a;
       margin-bottom: 8px;
     }
+
     .subtitle {
-      color: #64748b;
+      color: var(--muted);
       font-size: 0.9rem;
       margin-bottom: 24px;
     }
+
     .state {
       padding: 20px;
       border-radius: 8px;
       margin-top: 16px;
       background: #f1f5f9;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
-    .state.error { background: #fef2f2; color: #991b1b; }
-    .state.success { background: #f0fdf4; color: #166534; }
+
+    .state.error { background: var(--error); color: var(--error-text); }
+    .state.success { background: var(--success); color: var(--success-text); }
     .state.loading { background: #eff6ff; color: #1e40af; }
+
     .spinner {
       border: 3px solid #e2e8f0;
-      border-top: 3px solid #2563eb;
+      border-top: 3px solid var(--primary);
       border-radius: 50%;
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       animation: spin 1s linear infinite;
       display: inline-block;
       vertical-align: middle;
-      margin-right: 8px;
+      margin-right: 10px;
     }
+
     @keyframes spin { to { transform: rotate(360deg); } }
-    code {
-      background: #f1f5f9;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.85rem;
+
+    .footer {
+      margin-top: 24px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .profile-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #eff6ff;
+      color: var(--primary-dark);
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-top: 8px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div id="app">
     <h1>Manutenção Predial</h1>
     <p class="subtitle">Sistema de gestão de manutenção dos Salões do Reino</p>
 
-    <div id="app">
+    <div id="content">
       <div class="state loading">
-        <span class="spinner"></span>
-        Iniciando...
+        <span class="spinner"></span> Iniciando...
       </div>
+    </div>
+
+    <div class="footer">
+      <span id="footer-info">eMesas &middot; ukeep</span>
     </div>
   </div>
 
   <script>
     // ------------------------------------------------------------
-    // CONFIG — será lido do Orquestrador via API
+    // CONFIG
     // ------------------------------------------------------------
-    // No MVP, o front-end precisa saber a qual Orquestrador chamar.
-    // Cada Orquestrador tem uma URL própria de Web App.
-    // Você pode codificar aqui (para um Orquestrador só) ou descobrir
-    // via URL (?orch=...).
-    //
-    // Para o MVP, fixamos a URL do Orquestrador atual.
-    // ------------------------------------------------------------
+
+    // Orchestrator base URL (MVP: single orchestrator, hardcoded)
     const ORCHESTRATOR_URL = 'https://script.google.com/macros/s/AKfycbxSFKTksvmFI-oIPU3r1GaMlNaAn2zD3PfdwFmgfSwKrJUapemwOD0DXPufwu3uDB5d1A/exec';
 
     // ------------------------------------------------------------
     // HELPERS
     // ------------------------------------------------------------
+
     function getQueryParam(name) {
       const params = new URLSearchParams(window.location.search);
       return params.get(name);
     }
 
-    function render(content, stateClass = '') {
-      const app = document.getElementById('app');
-      app.innerHTML = '<div class="state ' + stateClass + '">' + content + '</div>';
+    function render(html, stateClass) {
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="state ' + (stateClass || '') + '">' + html + '</div>';
+    }
+
+    function buildUrl(action, extraParams) {
+      const parts = ['action=' + encodeURIComponent(action)];
+      if (extraParams) {
+        Object.keys(extraParams).forEach(function (k) {
+          if (extraParams[k] !== undefined && extraParams[k] !== null) {
+            parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(extraParams[k]));
+          }
+        });
+      }
+      return ORCHESTRATOR_URL + '?' + parts.join('&');
     }
 
     // ------------------------------------------------------------
     // API CALL
     // ------------------------------------------------------------
-    // Usa JSONP-like via fetch POST (o Orquestrador expõe doPost).
-    // Na prática, o Apps Script não aceita CORS direto, então
-    // usamos uma técnica de proxy: enviamos via <form> ou <img>.
-    // Para simplicidade no MVP, usamos fetch com mode no-cors,
-    // que não retorna a resposta. Alternativa: usar o Apps Script
-    // como endpoint JSONP.
-    //
-    // IMPORTANTE: como o back-end é Apps Script, e este front-end
-    // é hospedado em outro domínio (github.io), há restrição de CORS.
-    // A solução é usar o "Apps Script Web App com ?action= e GET",
-    // que funciona via iframe/script, ou hospedar o front-end
-    // dentro do Apps Script.
-    //
-    // No MVP, o caminho mais simples é: o front-end faz um GET
-    // ao Orquestrador com ?action=auth&key=... e o Orquestrador
-    // devolve JSON. GET entre origens é permitido se o servidor
-    // enviar os headers corretos — o Apps Script faz isso
-    // automaticamente ao usar ContentService.
-    // ------------------------------------------------------------
 
     async function callApi(action, params) {
-      const url = new URL(ORCHESTRATOR_URL);
-      url.searchParams.set('action', action);
-      if (params) {
-        Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
-      }
+      const url = buildUrl(action, params);
 
       try {
-        const response = await fetch(url.toString(), {
+        const response = await fetch(url, {
           method: 'GET',
+          mode: 'cors',
           redirect: 'follow'
         });
+
         if (!response.ok) {
-          throw new Error('HTTP ' + response.status);
+          return { success: false, error: 'http_' + response.status };
         }
-        return await response.json();
+
+        const text = await response.text();
+
+        // Try to parse as JSON; if it fails, return raw text
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          return { success: true, raw: text };
+        }
+
       } catch (err) {
-        return { success: false, error: 'network_error', message: err.message };
+        return {
+          success: false,
+          error: 'network_error',
+          message: err.message
+        };
       }
     }
 
     // ------------------------------------------------------------
     // MAIN FLOW
     // ------------------------------------------------------------
+
     async function init() {
-      // 1. Verificar se há chave na URL
       const key = getQueryParam('k');
 
+      // No key → welcome message
       if (!key) {
         render(
           '<strong>Bem-vindo.</strong><br><br>' +
@@ -165,53 +208,55 @@
         return;
       }
 
-      // 2. Autenticar
+      // Has key → authenticate
       render('<span class="spinner"></span> Autenticando...', 'loading');
 
-      const authResult = await callApi('auth', { key: key });
+      const result = await callApi('auth', { k: key });
 
-      if (!authResult.success) {
-        render(
-          '<strong>Não foi possível autenticar.</strong><br><br>' +
-          'Motivo: ' + (authResult.error || 'desconhecido') + '<br><br>' +
-          'Se o problema persistir, solicite um novo link ao seu coordenador ' +
-          'ou supervisor.',
-          'error'
-        );
+      // Error handling
+      if (!result.success) {
+        let message = 'Não foi possível autenticar.';
+
+        if (result.error === 'network_error') {
+          message += '<br><br>Erro de rede ou bloqueio do navegador.';
+          if (result.message) {
+            message += '<br><br><small style="opacity:.7;">' + result.message + '</small>';
+          }
+        } else if (result.error === 'invalid_key') {
+          message += '<br><br>A chave é inválida ou expirou.';
+          message += '<br>Solicite um novo link ao seu coordenador ou supervisor.';
+        } else {
+          message += '<br><br><small style="opacity:.7;">Erro: ' + (result.error || 'desconhecido') + '</small>';
+        }
+
+        render(message, 'error');
         return;
       }
 
-      // 3. Guardar sessão localmente
-      sessionStorage.setItem('session_token', authResult.session_token);
-      sessionStorage.setItem('person_id', authResult.person_id);
-      sessionStorage.setItem('profile', authResult.profile);
+      // Success → route by profile
+      const profile = result.profile || 'unknown';
 
-      // 4. Roteamento por perfil
-      if (authResult.profile === 'coordinator') {
-        render(
-          '<strong>Bem-vindo, coordenador!</strong><br><br>' +
-          'A interface do coordenador será construída na próxima fase.<br><br>' +
-          'Por enquanto, você está autenticado e pode fechar esta página.',
-          'success'
-        );
-      } else if (authResult.profile === 'supervisor') {
-        render(
-          '<strong>Bem-vindo, supervisor!</strong><br><br>' +
-          'A interface do supervisor será construída na próxima fase.<br><br>' +
-          'Por enquanto, você está autenticado e pode fechar esta página.',
-          'success'
-        );
-      } else {
-        render(
-          '<strong>Bem-vindo!</strong><br><br>' +
-          'Perfil: ' + authResult.profile + '<br><br>' +
-          'A interface para o seu perfil será construída na próxima fase.',
-          'success'
-        );
-      }
+      let profileLabel = profile;
+      if (profile === 'coordinator') profileLabel = 'Coordenador';
+      else if (profile === 'supervisor') profileLabel = 'Supervisor';
+      else if (profile === 'assignee') profileLabel = 'Encarregado';
+      else if (profile === 'assistant') profileLabel = 'Ajudante';
+      else if (profile === 'substitute') profileLabel = 'Substituto';
+
+      render(
+        '<strong>Bem-vindo!</strong><br><br>' +
+        'Você está autenticado no sistema.' +
+        '<br><span class="profile-badge">' + profileLabel + '</span>' +
+        '<br><br>' +
+        'As telas de operação estarão disponíveis nas próximas fases.',
+        'success'
+      );
     }
 
-    // Iniciar
+    // ------------------------------------------------------------
+    // BOOT
+    // ------------------------------------------------------------
+
     init();
   </script>
 </body>
