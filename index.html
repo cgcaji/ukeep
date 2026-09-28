@@ -64,13 +64,10 @@
       margin-right: 10px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    #app { display: none; width: 100%; }
   </style>
 </head>
 <body>
-  <!-- Boot shell: shows until authentication and app download complete -->
-  <div id="boot" class="boot-card">
+  <div class="boot-card">
     <h1>uKeep</h1>
     <p class="subtitle">Manutenção Predial</p>
     <div id="boot-content">
@@ -80,18 +77,9 @@
     </div>
   </div>
 
-  <!-- Real app: injected after authentication -->
-  <div id="app"></div>
-
   <script>
-    // ------------------------------------------------------------
-    // CONFIG
-    // ------------------------------------------------------------
     var ORCHESTRATOR_URL = 'https://script.google.com/macros/s/AKfycbxSFKTksvmFI-oIPU3r1GaMlNaAn2zD3PfdwFmgfSwKrJUapemwOD0DXPufwu3uDB5d1A/exec';
 
-    // ------------------------------------------------------------
-    // HELPERS
-    // ------------------------------------------------------------
     function bootRender(html, stateClass) {
       var el = document.getElementById('boot-content');
       if (el) {
@@ -126,9 +114,22 @@
         });
     }
 
-    // ------------------------------------------------------------
-    // BOOT SEQUENCE
-    // ------------------------------------------------------------
+    /**
+     * Inject HTML into the document, executing any <script> tags.
+     *
+     * Technique: parse as a contextual fragment for the body,
+     * then replace the entire body content with it.
+     * The `document.body.innerHTML = ""` before appending is essential —
+     * it makes the browser treat the scripts as new and execute them.
+     */
+    function injectHtml(html) {
+      var range = document.createRange();
+      range.selectNode(document.body);
+      var docFragment = range.createContextualFragment(html);
+      document.body.innerHTML = '';
+      document.body.append(docFragment);
+    }
+
     function boot() {
       var key = getQueryParam('k');
 
@@ -160,7 +161,6 @@
           return;
         }
 
-        // Store session context
         sessionStorage.setItem('session_token', authResult.session_token);
         sessionStorage.setItem('profile', authResult.profile);
         sessionStorage.setItem('person_id', authResult.person_id);
@@ -169,7 +169,6 @@
         if (authResult.property_name) sessionStorage.setItem('property_name', authResult.property_name);
         if (authResult.spreadsheet_id) sessionStorage.setItem('spreadsheet_id', authResult.spreadsheet_id);
 
-        // Download the app from the backend
         bootRender('<span class="spinner"></span> Carregando aplicação...', 'loading');
 
         return apiCall('renderApp', { sessionToken: authResult.session_token });
@@ -177,27 +176,27 @@
         if (!appResult) return;
 
         if (!appResult.success || !appResult.html) {
-          bootRender('Falha ao carregar a aplicação. Contate o suporte.', 'error');
+          bootRender('Falha ao carregar a aplicação: ' + (appResult.error || 'desconhecido'), 'error');
           return;
         }
 
-        // Replace the boot shell with the real app
-        document.getElementById('boot').style.display = 'none';
-        var appDiv = document.getElementById('app');
-        appDiv.innerHTML = appResult.html;
-        appDiv.style.display = 'block';
+        // Inject HTML and execute scripts
+        injectHtml(appResult.html);
 
-        // Call the app's boot hook
-        if (typeof window.ukeepBoot === 'function') {
-          try {
-            window.ukeepBoot();
-          } catch (e) {
-            console.error('ukeepBoot error:', e);
-            appDiv.innerHTML = '<div class="state error">Erro ao inicializar a aplicação: ' + e.message + '</div>';
+        // After injection, call the boot hook
+        setTimeout(function () {
+          if (typeof window.ukeepBoot === 'function') {
+            try {
+              window.ukeepBoot();
+            } catch (e) {
+              console.error('ukeepBoot error:', e);
+              document.body.innerHTML = '<div class="state error" style="margin:20px;">Erro ao inicializar: ' + e.message + '</div>';
+            }
+          } else {
+            document.body.innerHTML = '<div class="state error" style="margin:20px;">Aplicação inválida: hook de boot ausente.</div>';
           }
-        } else {
-          appDiv.innerHTML = '<div class="state error">Aplicação inválida: hook de boot ausente.</div>';
-        }
+        }, 0);
+
       }).catch(function (err) {
         bootRender('Erro inesperado: ' + err.message, 'error');
       });
