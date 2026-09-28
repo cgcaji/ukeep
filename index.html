@@ -8,82 +8,39 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bg: #f4f4f4;
-      --panel: #ffffff;
-      --text: #333333;
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --success-bg: #d4f8e8;
-      --success-text: #217a3a;
-      --error-bg: #ffdede;
-      --error-text: #991b1b;
-      --muted: #64748b;
-      --border: #dddddd;
-    }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background: #f4f4f4;
+      color: #333;
       min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ---------- Layout ---------- */
-    #app {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 24px 20px 80px;
-    }
-
-    header {
-      background: linear-gradient(to right, #17365d, #2563eb);
-      color: white;
-      padding: 14px 20px;
-      margin: -24px -20px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    header .brand {
-      display: flex;
-      flex-direction: column;
-      line-height: 1.1;
-    }
-
-    header .brand-name {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: white;
-      letter-spacing: -0.03em;
-    }
-
-    header .brand-tagline {
-      font-size: 0.7rem;
-      font-weight: 400;
-      color: rgba(255, 255, 255, 0.75);
-      margin-top: 2px;
-      letter-spacing: 0.02em;
-    }
-
-    header .user-info {
-      font-size: 0.85rem;
-      opacity: 0.95;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .container {
-      background: var(--panel);
+    .boot-card {
+      background: white;
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 32px;
+      max-width: 640px;
+      width: 100%;
     }
 
-    /* ---------- States ---------- */
+    .boot-card h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      color: #0f172a;
+    }
+
+    .boot-card .subtitle {
+      color: #64748b;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+
     .state {
       padding: 20px;
       border-radius: 8px;
@@ -91,14 +48,13 @@
       font-size: 0.95rem;
       line-height: 1.5;
     }
-    .state.error { background: var(--error-bg); color: var(--error-text); }
-    .state.success { background: var(--success-bg); color: var(--success-text); }
+    .state.error { background: #ffdede; color: #991b1b; }
+    .state.success { background: #d4f8e8; color: #217a3a; }
     .state.loading { background: #eff6ff; color: #1e40af; }
-    .state.empty { color: var(--muted); font-style: italic; }
 
     .spinner {
       border: 3px solid #e2e8f0;
-      border-top: 3px solid var(--primary);
+      border-top: 3px solid #2563eb;
       border-radius: 50%;
       width: 20px;
       height: 20px;
@@ -109,571 +65,145 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ---------- Menu ---------- */
-    .menu {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .menu button {
-      padding: 8px 16px;
-      border: 1px solid var(--border);
-      background: white;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .menu button:hover {
-      background: #eff6ff;
-      border-color: var(--primary);
-    }
-
-    .menu button.active {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-
-    /* ---------- Cards ---------- */
-    .card {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 12px;
-      background: white;
-      transition: box-shadow 0.15s;
-    }
-
-    .card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    .card h3 {
-      font-size: 1rem;
-      margin-bottom: 8px;
-    }
-
-    .card .meta {
-      font-size: 0.85rem;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-
-    .card .actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    /* ---------- Buttons ---------- */
-    .btn {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-    }
-    .btn-primary:hover { background: var(--primary-dark); }
-
-    .btn-secondary {
-      background: #f1f5f9;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-secondary:hover { background: #e2e8f0; }
-
-    .btn-danger {
-      background: var(--error-bg);
-      color: var(--error-text);
-    }
-    .btn-danger:hover { background: #fbb; }
-
-    /* ---------- Form ---------- */
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .form-group input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 0.9rem;
-      font-family: inherit;
-    }
-
-    .form-group input:focus {
-      outline: 2px solid var(--primary);
-      outline-offset: -2px;
-    }
-
-    .form-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
-    }
-
-    /* ---------- Badge ---------- */
-    .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.18);
-      color: white;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
-    code {
-      background: #f1f5f9;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.85rem;
-    }
+    #app { display: none; width: 100%; }
   </style>
 </head>
 <body>
+  <!-- Boot shell: shows until authentication and app download complete -->
+  <div id="boot" class="boot-card">
+    <h1>uKeep</h1>
+    <p class="subtitle">Manutenção Predial</p>
+    <div id="boot-content">
+      <div class="state loading">
+        <span class="spinner"></span> Iniciando...
+      </div>
+    </div>
+  </div>
+
+  <!-- Real app: injected after authentication -->
   <div id="app"></div>
 
   <script>
     // ------------------------------------------------------------
     // CONFIG
     // ------------------------------------------------------------
-    const ORCHESTRATOR_URL = 'https://script.google.com/macros/s/AKfycbxSFKTksvmFI-oIPU3r1GaMlNaAn2zD3PfdwFmgfSwKrJUapemwOD0DXPufwu3uDB5d1A/exec';
+    var ORCHESTRATOR_URL = 'https://script.google.com/macros/s/AKfycbxSFKTksvmFI-oIPU3r1GaMlNaAn2zD3PfdwFmgfSwKrJUapemwOD0DXPufwu3uDB5d1A/exec';
 
     // ------------------------------------------------------------
     // HELPERS
     // ------------------------------------------------------------
+    function bootRender(html, stateClass) {
+      var el = document.getElementById('boot-content');
+      if (el) {
+        el.innerHTML = '<div class="state ' + (stateClass || '') + '">' + html + '</div>';
+      }
+    }
+
     function getQueryParam(name) {
       return new URLSearchParams(window.location.search).get(name);
     }
 
-    function buildUrl(action, extraParams) {
-      const parts = ['action=' + encodeURIComponent(action)];
-      if (extraParams) {
-        Object.keys(extraParams).forEach(function (k) {
-          if (extraParams[k] !== undefined && extraParams[k] !== null) {
-            parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(extraParams[k]));
+    function apiCall(action, params) {
+      var parts = ['action=' + encodeURIComponent(action)];
+      if (params) {
+        Object.keys(params).forEach(function (k) {
+          if (params[k] !== undefined && params[k] !== null) {
+            parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
           }
         });
       }
-      return ORCHESTRATOR_URL + '?' + parts.join('&');
-    }
+      var url = ORCHESTRATOR_URL + '?' + parts.join('&');
 
-    async function apiCall(action, params) {
-      const url = buildUrl(action, params);
-      try {
-        const response = await fetch(url, { method: 'GET', mode: 'cors', redirect: 'follow' });
-        if (!response.ok) return { success: false, error: 'http_' + response.status };
-        const text = await response.text();
-        try { return JSON.parse(text); } catch (e) { return { success: true, raw: text }; }
-      } catch (err) {
-        return { success: false, error: 'network_error', message: err.message };
-      }
-    }
-
-    function esc(s) {
-      return String(s == null ? '' : s)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      return fetch(url, { method: 'GET', mode: 'cors', redirect: 'follow' })
+        .then(function (response) {
+          if (!response.ok) return { success: false, error: 'http_' + response.status };
+          return response.text().then(function (text) {
+            try { return JSON.parse(text); } catch (e) { return { success: true, raw: text }; }
+          });
+        })
+        .catch(function (err) {
+          return { success: false, error: 'network_error', message: err.message };
+        });
     }
 
     // ------------------------------------------------------------
-    // SESSION
+    // BOOT SEQUENCE
     // ------------------------------------------------------------
-    const Session = {
-      get: function (key) { return sessionStorage.getItem(key); },
-      set: function (key, value) { sessionStorage.setItem(key, value); },
-      clear: function () { sessionStorage.clear(); },
-      isLogged: function () { return !!sessionStorage.getItem('session_token'); }
-    };
-
-    // ------------------------------------------------------------
-    // RENDER
-    // ------------------------------------------------------------
-    function render(html) {
-      document.getElementById('app').innerHTML = html;
-    }
-
-    function renderHeader() {
-      const profile = Session.get('profile') || '';
-      const person = Session.get('person_id') || '';
-      let profileLabel = profile;
-      if (profile === 'coordinator') profileLabel = 'Coordenador';
-      else if (profile === 'supervisor') profileLabel = 'Supervisor';
-      else if (profile === 'assignee') profileLabel = 'Encarregado';
-      else if (profile === 'assistant') profileLabel = 'Ajudante';
-      else if (profile === 'substitute') profileLabel = 'Substituto';
-
-      return '<header>' +
-        '<div class="brand">' +
-          '<span class="brand-name">uKeep</span>' +
-          '<span class="brand-tagline">Manutenção Predial</span>' +
-        '</div>' +
-        '<div class="user-info">' +
-          (person ? 'Usuário #' + esc(person) : '') +
-          '<span class="badge">' + esc(profileLabel) + '</span>' +
-        '</div>' +
-      '</header>';
-    }
-
-    function renderLogin() {
-      render(
-        '<div class="container">' +
-          '<h1>uKeep</h1>' +
-          '<p style="color:var(--muted); margin-bottom: 24px;">Sistema de gestão de manutenção dos Salões do Reino</p>' +
-          '<div class="state success">' +
-            '<strong>Bem-vindo.</strong><br><br>' +
-            'Para acessar o sistema, use o link enviado pelo seu coordenador ' +
-            'ou supervisor.<br><br>' +
-            'O link contém uma chave pessoal no formato <code>?k=...</code>.' +
-          '</div>' +
-        '</div>'
-      );
-    }
-
-    function renderError(message) {
-      render(
-        '<div class="container">' +
-          '<h1>uKeep</h1>' +
-          '<div class="state error" style="margin-top: 24px;">' +
-            message +
-            '<br><br>' +
-            '<button class="btn btn-secondary" onclick="logout()">Voltar</button>' +
-          '</div>' +
-        '</div>'
-      );
-    }
-
-    // ------------------------------------------------------------
-    // AUTHENTICATION FLOW
-    // ------------------------------------------------------------
-    async function init() {
-      if (Session.isLogged()) {
-        routeToProfile();
-        return;
-      }
-
-      const key = getQueryParam('k');
+    function boot() {
+      var key = getQueryParam('k');
 
       if (!key) {
-        renderLogin();
+        bootRender(
+          '<strong>Bem-vindo.</strong><br><br>' +
+          'Para acessar o sistema, use o link enviado pelo seu coordenador ' +
+          'ou supervisor.<br><br>' +
+          'O link contém uma chave pessoal no formato <code>?k=...</code>.',
+          'success'
+        );
         return;
       }
 
-      render(
-        '<div class="container">' +
-          '<div class="state loading" style="margin-top: 24px;">' +
-            '<span class="spinner"></span> Autenticando...' +
-          '</div>' +
-        '</div>'
-      );
+      bootRender('<span class="spinner"></span> Autenticando...', 'loading');
 
-      const result = await apiCall('auth', { k: key });
-
-      if (!result.success) {
-        let message = 'Não foi possível autenticar.';
-        if (result.error === 'invalid_key') {
-          message += '<br><br>A chave é inválida ou expirou.';
-          message += '<br>Solicite um novo link ao seu coordenador ou supervisor.';
-        } else if (result.error === 'network_error') {
-          message += '<br><br>Erro de rede ou bloqueio do navegador.';
-        } else {
-          message += '<br><br><small>Erro: ' + esc(result.error || 'desconhecido') + '</small>';
+      apiCall('auth', { k: key }).then(function (authResult) {
+        if (!authResult.success) {
+          var message = 'Não foi possível autenticar.';
+          if (authResult.error === 'invalid_key') {
+            message += '<br><br>A chave é inválida ou expirou.';
+            message += '<br>Solicite um novo link ao seu coordenador ou supervisor.';
+          } else if (authResult.error === 'network_error') {
+            message += '<br><br>Erro de rede ou bloqueio do navegador.';
+          } else {
+            message += '<br><br><small>Erro: ' + (authResult.error || 'desconhecido') + '</small>';
+          }
+          bootRender(message, 'error');
+          return;
         }
-        renderError(message);
-        return;
-      }
 
-      Session.set('session_token', result.session_token);
-      Session.set('profile', result.profile);
-      Session.set('person_id', result.person_id);
-      if (result.source) Session.set('source', result.source);
-      if (result.property_id) Session.set('property_id', result.property_id);
-      if (result.property_name) Session.set('property_name', result.property_name);
-      if (result.spreadsheet_id) Session.set('spreadsheet_id', result.spreadsheet_id);
+        // Store session context
+        sessionStorage.setItem('session_token', authResult.session_token);
+        sessionStorage.setItem('profile', authResult.profile);
+        sessionStorage.setItem('person_id', authResult.person_id);
+        if (authResult.source) sessionStorage.setItem('source', authResult.source);
+        if (authResult.property_id) sessionStorage.setItem('property_id', authResult.property_id);
+        if (authResult.property_name) sessionStorage.setItem('property_name', authResult.property_name);
+        if (authResult.spreadsheet_id) sessionStorage.setItem('spreadsheet_id', authResult.spreadsheet_id);
 
-      routeToProfile();
-    }
+        // Download the app from the backend
+        bootRender('<span class="spinner"></span> Carregando aplicação...', 'loading');
 
-    function routeToProfile() {
-      const profile = Session.get('profile');
+        return apiCall('renderApp', { sessionToken: authResult.session_token });
+      }).then(function (appResult) {
+        if (!appResult) return;
 
-      if (profile === 'coordinator') renderCoordinatorHome();
-      else if (profile === 'supervisor') renderSupervisorHome();
-      else if (profile === 'assignee') renderAssigneeHome();
-      else if (profile === 'assistant') renderAssistantHome();
-      else if (profile === 'substitute') renderSupervisorHome();
-      else renderError('Perfil desconhecido: ' + esc(profile));
-    }
+        if (!appResult.success || !appResult.html) {
+          bootRender('Falha ao carregar a aplicação. Contate o suporte.', 'error');
+          return;
+        }
 
-    // ------------------------------------------------------------
-    // COORDINATOR VIEWS
-    // ------------------------------------------------------------
-    function renderCoordinatorHome() {
-      render(
-        renderHeader() +
-        '<div class="container">' +
-          '<div class="menu">' +
-            '<button class="active" onclick="showCoordinatorProperties()">Imóveis</button>' +
-            '<button onclick="showCoordinatorNewProperty()">Cadastrar imóvel</button>' +
-            '<button onclick="logout()">Sair</button>' +
-          '</div>' +
-          '<div id="content"></div>' +
-        '</div>'
-      );
-      showCoordinatorProperties();
-    }
+        // Replace the boot shell with the real app
+        document.getElementById('boot').style.display = 'none';
+        var appDiv = document.getElementById('app');
+        appDiv.innerHTML = appResult.html;
+        appDiv.style.display = 'block';
 
-    async function showCoordinatorProperties() {
-      const content = document.getElementById('content');
-      content.innerHTML = '<div class="state loading"><span class="spinner"></span> Carregando imóveis...</div>';
-
-      const result = await apiCall('listProperties', { sessionToken: Session.get('session_token') });
-
-      if (!result.success) {
-        content.innerHTML = '<div class="state error">Erro ao carregar imóveis: ' + esc(result.error) + '</div>';
-        return;
-      }
-
-      const properties = result.properties || [];
-
-      if (properties.length === 0) {
-        content.innerHTML = '<div class="state empty">Nenhum imóvel cadastrado ainda. Clique em "Cadastrar imóvel" para começar.</div>';
-        return;
-      }
-
-      let html = '';
-      properties.forEach(function (p) {
-        html +=
-          '<div class="card">' +
-            '<h3>' + esc(p.name) + '</h3>' +
-            '<div class="meta">' +
-              esc(p.address) +
-              '<br>Supervisor: ' + esc(p.supervisor_name) + ' (' + esc(p.supervisor_email) + ')' +
-            '</div>' +
-            '<div class="actions">' +
-              '<button class="btn btn-primary" onclick="showPropertyDetail(' + p.id + ')">Ver detalhes</button>' +
-            '</div>' +
-          '</div>';
+        // Call the app's boot hook
+        if (typeof window.ukeepBoot === 'function') {
+          try {
+            window.ukeepBoot();
+          } catch (e) {
+            console.error('ukeepBoot error:', e);
+            appDiv.innerHTML = '<div class="state error">Erro ao inicializar a aplicação: ' + e.message + '</div>';
+          }
+        } else {
+          appDiv.innerHTML = '<div class="state error">Aplicação inválida: hook de boot ausente.</div>';
+        }
+      }).catch(function (err) {
+        bootRender('Erro inesperado: ' + err.message, 'error');
       });
-      content.innerHTML = html;
     }
 
-    function showCoordinatorNewProperty() {
-      const content = document.getElementById('content');
-      content.innerHTML =
-        '<h2 style="margin-bottom: 20px;">Cadastrar novo imóvel</h2>' +
-        '<div class="form-group">' +
-          '<label>Nome do imóvel *</label>' +
-          '<input type="text" id="new_property_name" placeholder="Ex: Salão Central">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>Endereço *</label>' +
-          '<input type="text" id="new_property_address" placeholder="Rua ..., 123 - Cidade/UF">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>Coordenadas (opcional)</label>' +
-          '<input type="text" id="new_property_coords" placeholder="-23.5505, -46.6333">' +
-        '</div>' +
-        '<h3 style="margin-top: 24px; margin-bottom: 12px;">Supervisor</h3>' +
-        '<div class="form-group">' +
-          '<label>Nome do supervisor *</label>' +
-          '<input type="text" id="new_supervisor_name">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>E-mail do supervisor *</label>' +
-          '<input type="email" id="new_supervisor_email">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>Telefone do supervisor *</label>' +
-          '<input type="text" id="new_supervisor_phone" placeholder="+5511999999999">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label>' +
-            '<input type="checkbox" id="new_supervisor_whatsapp" checked style="width:auto; margin-right:6px;">' +
-            'Telefone é WhatsApp' +
-          '</label>' +
-        '</div>' +
-        '<div class="form-actions">' +
-          '<button class="btn btn-secondary" onclick="showCoordinatorProperties()">Cancelar</button>' +
-          '<button class="btn btn-primary" onclick="submitNewProperty()">Fazer deploy</button>' +
-        '</div>';
-    }
-
-    async function submitNewProperty() {
-      const name = document.getElementById('new_property_name').value.trim();
-      const address = document.getElementById('new_property_address').value.trim();
-      const coords = document.getElementById('new_property_coords').value.trim();
-      const supName = document.getElementById('new_supervisor_name').value.trim();
-      const supEmail = document.getElementById('new_supervisor_email').value.trim();
-      const supPhone = document.getElementById('new_supervisor_phone').value.trim();
-      const supWhatsApp = document.getElementById('new_supervisor_whatsapp').checked;
-
-      if (!name || !address || !supName || !supEmail || !supPhone) {
-        alert('Preencha todos os campos obrigatórios.');
-        return;
-      }
-
-      const content = document.getElementById('content');
-      content.innerHTML = '<div class="state loading"><span class="spinner"></span> Fazendo deploy... isso pode levar 30 segundos.</div>';
-
-      const result = await apiCall('createProperty', {
-        sessionToken: Session.get('session_token'),
-        property_name: name,
-        property_address: address,
-        property_coordinates: coords,
-        supervisor_name: supName,
-        supervisor_email: supEmail,
-        supervisor_phone: supPhone,
-        supervisor_phone_whatsapp: supWhatsApp
-      });
-
-      if (!result.success) {
-        content.innerHTML = '<div class="state error">Erro no deploy: ' + esc(result.error) + '</div>' +
-          '<div class="form-actions"><button class="btn btn-secondary" onclick="showCoordinatorProperties()">Voltar</button></div>';
-        return;
-      }
-
-      content.innerHTML =
-        '<div class="state success">' +
-          '<strong>Deploy concluído!</strong><br><br>' +
-          'Imóvel: ' + esc(name) + '<br>' +
-          'Supervisor: ' + esc(supName) + ' (' + esc(supEmail) + ')<br>' +
-          'E-mail enviado.<br><br>' +
-          '<small>ID do imóvel: ' + esc(result.property_id) + '</small>' +
-        '</div>' +
-        '<div class="form-actions">' +
-          '<button class="btn btn-primary" onclick="showCoordinatorProperties()">Voltar para a lista</button>' +
-        '</div>';
-    }
-
-    async function showPropertyDetail(propertyId) {
-      const content = document.getElementById('content');
-      content.innerHTML = '<div class="state loading"><span class="spinner"></span> Carregando...</div>';
-
-      const result = await apiCall('getProperty', {
-        sessionToken: Session.get('session_token'),
-        propertyId: propertyId
-      });
-
-      if (!result.success) {
-        content.innerHTML = '<div class="state error">Erro: ' + esc(result.error) + '</div>' +
-          '<div class="form-actions"><button class="btn btn-secondary" onclick="showCoordinatorProperties()">Voltar</button></div>';
-        return;
-      }
-
-      const p = result.property;
-      content.innerHTML =
-        '<h2 style="margin-bottom: 16px;">' + esc(p.name) + '</h2>' +
-        '<div class="card">' +
-          '<div class="meta">' +
-            '<strong>Endereço:</strong> ' + esc(p.address) + '<br>' +
-            '<strong>Coordenadas:</strong> ' + esc(p.coordinates || '(não informado)') + '<br>' +
-            '<strong>Supervisor:</strong> ' + esc(p.supervisor_name) + '<br>' +
-            '<strong>E-mail:</strong> ' + esc(p.supervisor_email) + '<br>' +
-            '<strong>Telefone:</strong> ' + esc(p.supervisor_phone) + '<br>' +
-            '<strong>Spreadsheet:</strong> <code>' + esc(p.spreadsheet_id) + '</code><br>' +
-            '<strong>Criado em:</strong> ' + esc(p.created_at) +
-          '</div>' +
-        '</div>' +
-        '<div class="form-actions">' +
-          '<button class="btn btn-secondary" onclick="showCoordinatorProperties()">Voltar</button>' +
-        '</div>';
-    }
-
-    // ------------------------------------------------------------
-    // SUPERVISOR VIEWS
-    // ------------------------------------------------------------
-    function renderSupervisorHome() {
-      const propertyName = Session.get('property_name') || '(imóvel)';
-      render(
-        renderHeader() +
-        '<div class="container">' +
-          '<h2>' + esc(propertyName) + '</h2>' +
-          '<p style="color:var(--muted); margin-bottom: 24px;">Você é supervisor deste imóvel.</p>' +
-          '<div class="state success">' +
-            '<strong>Acesso confirmado.</strong><br><br>' +
-            'As funcionalidades do supervisor (campanhas, pessoas, acompanhamento) ' +
-            'estarão disponíveis nas próximas fases.' +
-          '</div>' +
-          '<div class="form-actions">' +
-            '<button class="btn btn-secondary" onclick="logout()">Sair</button>' +
-          '</div>' +
-        '</div>'
-      );
-    }
-
-    // ------------------------------------------------------------
-    // ASSIGNEE / ASSISTANT VIEWS
-    // ------------------------------------------------------------
-    function renderAssigneeHome() {
-      const propertyName = Session.get('property_name') || '(imóvel)';
-      render(
-        renderHeader() +
-        '<div class="container">' +
-          '<h2>' + esc(propertyName) + '</h2>' +
-          '<p style="color:var(--muted); margin-bottom: 24px;">Você é encarregado de inspeções neste imóvel.</p>' +
-          '<div class="state success">' +
-            '<strong>Acesso confirmado.</strong><br><br>' +
-            'Suas tarefas de inspeção estarão disponíveis nas próximas fases.' +
-          '</div>' +
-          '<div class="form-actions">' +
-            '<button class="btn btn-secondary" onclick="logout()">Sair</button>' +
-          '</div>' +
-        '</div>'
-      );
-    }
-
-    function renderAssistantHome() {
-      const propertyName = Session.get('property_name') || '(imóvel)';
-      render(
-        renderHeader() +
-        '<div class="container">' +
-          '<h2>' + esc(propertyName) + '</h2>' +
-          '<p style="color:var(--muted); margin-bottom: 24px;">Você é ajudante neste imóvel.</p>' +
-          '<div class="state success">' +
-            '<strong>Acesso confirmado.</strong>' +
-          '</div>' +
-          '<div class="form-actions">' +
-            '<button class="btn btn-secondary" onclick="logout()">Sair</button>' +
-          '</div>' +
-        '</div>'
-      );
-    }
-
-    // ------------------------------------------------------------
-    // LOGOUT
-    // ------------------------------------------------------------
-    function logout() {
-      Session.clear();
-      const url = new URL(window.location.href);
-      url.searchParams.delete('k');
-      window.history.replaceState({}, '', url.pathname + url.search);
-      renderLogin();
-    }
-
-    // ------------------------------------------------------------
-    // BOOT
-    // ------------------------------------------------------------
-    init();
+    boot();
   </script>
 </body>
 </html>
