@@ -13,13 +13,25 @@
       background: #f4f4f4;
       color: #333;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Boot layout: centered card (only before app loads) */
+    body:not(.app-loaded) {
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
-      -webkit-font-smoothing: antialiased;
     }
 
+    /* App layout: full width, no centering (after app loads) */
+    body.app-loaded {
+      display: block;
+      padding: 0;
+      background: #f4f4f4;
+    }
+
+    /* ---------- Boot card ---------- */
     .boot-card {
       background: white;
       border-radius: 12px;
@@ -64,6 +76,13 @@
       margin-right: 10px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
@@ -121,12 +140,16 @@
      * then replace the entire body content with it.
      * The `document.body.innerHTML = ""` before appending is essential —
      * it makes the browser treat the scripts as new and execute them.
+     *
+     * Also adds the `app-loaded` class to body, which removes the
+     * centered flex layout used for the boot card.
      */
     function injectHtml(html) {
       var range = document.createRange();
       range.selectNode(document.body);
       var docFragment = range.createContextualFragment(html);
       document.body.innerHTML = '';
+      document.body.classList.add('app-loaded');
       document.body.append(docFragment);
     }
 
@@ -180,10 +203,8 @@
           return;
         }
 
-        // Inject HTML and execute scripts
         injectHtml(appResult.html);
 
-        // After injection, call the boot hook
         setTimeout(function () {
           if (typeof window.ukeepBoot === 'function') {
             try {
