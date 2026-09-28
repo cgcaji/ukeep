@@ -16,7 +16,6 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Boot layout: centered card (only before app loads) */
     body:not(.app-loaded) {
       display: flex;
       align-items: center;
@@ -24,14 +23,12 @@
       padding: 20px;
     }
 
-    /* App layout: full width, no centering (after app loads) */
     body.app-loaded {
       display: block;
       padding: 0;
       background: #f4f4f4;
     }
 
-    /* ---------- Boot card ---------- */
     .boot-card {
       background: white;
       border-radius: 12px;
@@ -99,6 +96,10 @@
   <script>
     var ORCHESTRATOR_URL = 'https://script.google.com/macros/s/AKfycbxSFKTksvmFI-oIPU3r1GaMlNaAn2zD3PfdwFmgfSwKrJUapemwOD0DXPufwu3uDB5d1A/exec';
 
+    var APP_CACHE_KEY = 'ukeep_app_html';
+    var APP_CACHE_TS_KEY = 'ukeep_app_timestamp';
+    var APP_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
     function bootRender(html, stateClass) {
       var el = document.getElementById('boot-content');
       if (el) {
@@ -134,16 +135,40 @@
     }
 
     /**
-     * Inject HTML into the document, executing any <script> tags.
-     *
-     * Technique: parse as a contextual fragment for the body,
-     * then replace the entire body content with it.
-     * The `document.body.innerHTML = ""` before appending is essential —
-     * it makes the browser treat the scripts as new and execute them.
-     *
-     * Also adds the `app-loaded` class to body, which removes the
-     * centered flex layout used for the boot card.
+     * Read the cached app HTML from localStorage, if fresh.
+     * Returns null if missing or expired.
      */
+    function getCachedApp() {
+      try {
+        var html = localStorage.getItem(APP_CACHE_KEY);
+        var ts = localStorage.getItem(APP_CACHE_TS_KEY);
+        if (!html || !ts) return null;
+
+        var age = Date.now() - parseInt(ts, 10);
+        if (age > APP_CACHE_TTL_MS) {
+          localStorage.removeItem(APP_CACHE_KEY);
+          localStorage.removeItem(APP_CACHE_TS_KEY);
+          return null;
+        }
+        return html;
+      } catch (e) {
+        // localStorage may be disabled (private mode, quota)
+        return null;
+      }
+    }
+
+    /**
+     * Save the app HTML to localStorage with the current timestamp.
+     */
+    function setCachedApp(html) {
+      try {
+        localStorage.setItem(APP_CACHE_KEY, html);
+        localStorage.setItem(APP_CACHE_TS_KEY, Date.now().toString());
+      } catch (e) {
+        // Ignore quota / private mode errors
+      }
+    }
+
     function injectHtml(html) {
       var range = document.createRange();
       range.selectNode(document.body);
@@ -151,6 +176,22 @@
       document.body.innerHTML = '';
       document.body.classList.add('app-loaded');
       document.body.append(docFragment);
+    }
+
+    function bootApp(html) {
+      injectHtml(html);
+      setTimeout(function () {
+        if (typeof window.ukeepBoot === 'function') {
+          try {
+            window.ukeepBoot();
+          } catch (e) {
+            console.error('ukeepBoot error:', e);
+            document.body.innerHTML = '<div class="state error" style="margin:20px;">Erro ao inicializar: ' + e.message + '</div>';
+          }
+        } else {
+          document.body.innerHTML = '<div class="state error" style="margin:20px;">Aplicação inválida: hook de boot ausente.</div>';
+        }
+      }, 0);
     }
 
     function boot() {
@@ -192,6 +233,14 @@
         if (authResult.property_name) sessionStorage.setItem('property_name', authResult.property_name);
         if (authResult.spreadsheet_id) sessionStorage.setItem('spreadsheet_id', authResult.spreadsheet_id);
 
+        // Try cache first
+        var cachedHtml = getCachedApp();
+        if (cachedHtml) {
+          bootApp(cachedHtml);
+          return;
+        }
+
+        // Cache miss — fetch from backend
         bootRender('<span class="spinner"></span> Carregando aplicação...', 'loading');
 
         return apiCall('renderApp', { sessionToken: authResult.session_token });
@@ -203,20 +252,14 @@
           return;
         }
 
-        injectHtml(appResult.html);
+        // Save to cache and boot
+        setCachedApp(appResult.html);
 
-        setTimeout(function () {
-          if (typeof window.ukeepBoot === 'function') {
-            try {
-              window.ukeepBoot();
-            } catch (e) {
-              console.error('ukeepBoot error:', e);
-              document.body.innerHTML = '<div class="state error" style="margin:20px;">Erro ao inicializar: ' + e.message + '</div>';
-            }
-          } else {
-            document.body.innerHTML = '<div class="state error" style="margin:20px;">Aplicação inválida: hook de boot ausente.</div>';
-          }
-        }, 0);
+        if (appResult.property) {
+          window.__ukeepInitialProperty = appResult.property;
+        }
+
+        bootApp(appResult.html);
 
       }).catch(function (err) {
         bootRender('Erro inesperado: ' + err.message, 'error');
