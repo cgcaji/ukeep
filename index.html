@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Manutenção Predial</title>
+  <title>uKeep | Manutenção Predial</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -40,22 +40,40 @@
     header {
       background: linear-gradient(to right, #17365d, #2563eb);
       color: white;
-      padding: 16px 20px;
+      padding: 14px 20px;
       margin: -24px -20px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    header h1 {
-      font-size: 1.1rem;
-      font-weight: 600;
+    header .brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    header .brand-name {
+      font-size: 1.6rem;
+      font-weight: 700;
       color: white;
+      letter-spacing: -0.03em;
+    }
+
+    header .brand-tagline {
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.75);
+      margin-top: 2px;
+      letter-spacing: 0.02em;
     }
 
     header .user-info {
       font-size: 0.85rem;
-      opacity: 0.9;
+      opacity: 0.95;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .container {
@@ -91,7 +109,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ---------- Menu (coordinator) ---------- */
+    /* ---------- Menu ---------- */
     .menu {
       display: flex;
       gap: 8px;
@@ -212,16 +230,15 @@
       margin-top: 24px;
     }
 
-    /* ---------- Profile badge ---------- */
+    /* ---------- Badge ---------- */
     .badge {
       display: inline-block;
       padding: 4px 10px;
       border-radius: 12px;
-      background: #eff6ff;
-      color: var(--primary-dark);
+      background: rgba(255, 255, 255, 0.18);
+      color: white;
       font-size: 0.75rem;
       font-weight: 600;
-      margin-left: 8px;
     }
 
     code {
@@ -306,9 +323,12 @@
       else if (profile === 'substitute') profileLabel = 'Substituto';
 
       return '<header>' +
-        '<h1>Manutenção Predial</h1>' +
+        '<div class="brand">' +
+          '<span class="brand-name">uKeep</span>' +
+          '<span class="brand-tagline">Manutenção Predial</span>' +
+        '</div>' +
         '<div class="user-info">' +
-          (person ? 'Usuário #' + esc(person) + ' ' : '') +
+          (person ? 'Usuário #' + esc(person) : '') +
           '<span class="badge">' + esc(profileLabel) + '</span>' +
         '</div>' +
       '</header>';
@@ -317,7 +337,7 @@
     function renderLogin() {
       render(
         '<div class="container">' +
-          '<h1>Manutenção Predial</h1>' +
+          '<h1>uKeep</h1>' +
           '<p style="color:var(--muted); margin-bottom: 24px;">Sistema de gestão de manutenção dos Salões do Reino</p>' +
           '<div class="state success">' +
             '<strong>Bem-vindo.</strong><br><br>' +
@@ -332,7 +352,7 @@
     function renderError(message) {
       render(
         '<div class="container">' +
-          '<h1>Manutenção Predial</h1>' +
+          '<h1>uKeep</h1>' +
           '<div class="state error" style="margin-top: 24px;">' +
             message +
             '<br><br>' +
@@ -346,7 +366,6 @@
     // AUTHENTICATION FLOW
     // ------------------------------------------------------------
     async function init() {
-      // If already logged, route based on profile
       if (Session.isLogged()) {
         routeToProfile();
         return;
@@ -359,7 +378,6 @@
         return;
       }
 
-      // Authenticate
       render(
         '<div class="container">' +
           '<div class="state loading" style="margin-top: 24px;">' +
@@ -384,7 +402,6 @@
         return;
       }
 
-      // Store session
       Session.set('session_token', result.session_token);
       Session.set('profile', result.profile);
       Session.set('person_id', result.person_id);
@@ -399,19 +416,12 @@
     function routeToProfile() {
       const profile = Session.get('profile');
 
-      if (profile === 'coordinator') {
-        renderCoordinatorHome();
-      } else if (profile === 'supervisor') {
-        renderSupervisorHome();
-      } else if (profile === 'assignee') {
-        renderAssigneeHome();
-      } else if (profile === 'assistant') {
-        renderAssistantHome();
-      } else if (profile === 'substitute') {
-        renderSupervisorHome();  // substitute has supervisor powers
-      } else {
-        renderError('Perfil desconhecido: ' + esc(profile));
-      }
+      if (profile === 'coordinator') renderCoordinatorHome();
+      else if (profile === 'supervisor') renderSupervisorHome();
+      else if (profile === 'assignee') renderAssigneeHome();
+      else if (profile === 'assistant') renderAssistantHome();
+      else if (profile === 'substitute') renderSupervisorHome();
+      else renderError('Perfil desconhecido: ' + esc(profile));
     }
 
     // ------------------------------------------------------------
@@ -422,7 +432,7 @@
         renderHeader() +
         '<div class="container">' +
           '<div class="menu">' +
-            '<button class="active" onclick="showCoordinatorProperties()">Meus imóveis</button>' +
+            '<button class="active" onclick="showCoordinatorProperties()">Imóveis</button>' +
             '<button onclick="showCoordinatorNewProperty()">Cadastrar imóvel</button>' +
             '<button onclick="logout()">Sair</button>' +
           '</div>' +
@@ -525,8 +535,6 @@
       const content = document.getElementById('content');
       content.innerHTML = '<div class="state loading"><span class="spinner"></span> Fazendo deploy... isso pode levar 30 segundos.</div>';
 
-      // NOTE: For MVP, this uses a workaround since we cannot POST long payloads easily.
-      // We pass everything as query string.
       const result = await apiCall('createProperty', {
         sessionToken: Session.get('session_token'),
         property_name: name,
@@ -656,7 +664,6 @@
     // ------------------------------------------------------------
     function logout() {
       Session.clear();
-      // Remove k from URL if present
       const url = new URL(window.location.href);
       url.searchParams.delete('k');
       window.history.replaceState({}, '', url.pathname + url.search);
