@@ -123,14 +123,17 @@
         <span class="spinner"></span> Iniciando...
       </div>
     </div>
-    <button id="ukeep-install-btn" onclick="ukeepInstall()" style="display:none;margin-top:16px;padding:10px 16px;border:0;border-radius:8px;
-             background:#0f172a;color:#fff;font-size:0.9rem;cursor:pointer;">
-      📲 Instalar aplicativo
-    </button>
-    <p id="ukeep-ios-hint" style="display:none;margin-top:12px;color:#64748b;font-size:0.85rem;text-align:center;">
-      Para instalar no iPhone: toque em <strong>Compartilhar</strong> → <strong>Adicionar à Tela de Início</strong>.
-    </p>
   </div>
+
+  <!-- PWA install controls: FICAM FORA do boot-card para sobreviverem ao boot -->
+  <button id="ukeep-install-btn" onclick="ukeepInstall()"
+    style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:5000;padding:12px 20px;border:0;border-radius:10px;background:#0f172a;color:#fff;font-size:0.95rem;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3);">
+    📲 Instalar aplicativo
+  </button>
+  <p id="ukeep-ios-hint"
+    style="display:none;position:fixed;left:0;right:0;bottom:16px;z-index:5000;margin:0 auto;max-width:340px;background:#fff;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.15);padding:12px 16px;color:#64748b;font-size:0.85rem;text-align:center;">
+    Para instalar no iPhone: toque em <strong>Compartilhar</strong> → <strong>Adicionar à Tela de Início</strong>.
+  </p>
 
   <script>
     var ORCHESTRATOR_URL = 'https://script.google.com/macros/s/AKfycbxSFKTksvmFI-oIPU3r1GaMlNaAn2zD3PfdwFmgfSwKrJUapemwOD0DXPufwu3uDB5d1A/exec';
@@ -138,6 +141,41 @@
     var APP_CACHE_KEY = 'ukeep_app_html';
     var APP_CACHE_TS_KEY = 'ukeep_app_timestamp';
     var APP_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+    // ============================================================
+    // PWA: registrar o Service Worker IMEDIATAMENTE.
+    // O Chrome só dispara `beforeinstallprompt` quando a página é
+    // controlada por um SW com handler `fetch`. Registrar no `load`
+    // fazia o app só ficar instalável na SEGUNDA visita.
+    // ============================================================
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js', { scope: './' })
+        .then(function (reg) { console.log('[uKeep] SW registrado:', reg.scope); })
+        .catch(function (err) { console.warn('[uKeep] Falha ao registrar SW:', err); });
+    }
+
+    // ============================================================
+    // HISTORY SENTINEL — impede que o "voltar" feche o browser/PWA.
+    // Empilhado AQUI, antes do app carregar, para cobrir também o
+    // boot. O app (ukeep-app.html) reempilha após cada navegação.
+    // ============================================================
+    (function () {
+      var SENTINEL = '__ukeep_root_sentinel__';
+      try {
+        history.pushState({ ukeep: SENTINEL }, '', location.href);
+      } catch (e) { /* file:// ou sandbox */ }
+
+      window.addEventListener('popstate', function (event) {
+        // Se o app já assumiu o controle (ukeepBoot rodou), não interferir:
+        // o handler de popstate do app cuida da navegação interna.
+        if (window.__ukeepHistoryOwned) return;
+
+        // Sem app carregado ainda (tela de login/boot), apenas re-empilha
+        // uma vez para não fechar o browser. Se o usuário insistir, sai.
+        if (event.state && event.state.ukeep === SENTINEL) return;
+        try { history.pushState({ ukeep: SENTINEL }, '', location.href); } catch (e) { }
+      });
+    })();
 
     function bootRender(html, stateClass) {
       var el = document.getElementById('boot-content');
@@ -173,16 +211,11 @@
         });
     }
 
-    /**
-     * Read the cached app HTML from localStorage, if fresh.
-     * Returns null if missing or expired.
-     */
     function getCachedApp() {
       try {
         var html = localStorage.getItem(APP_CACHE_KEY);
         var ts = localStorage.getItem(APP_CACHE_TS_KEY);
         if (!html || !ts) return null;
-
         var age = Date.now() - parseInt(ts, 10);
         if (age > APP_CACHE_TTL_MS) {
           localStorage.removeItem(APP_CACHE_KEY);
@@ -191,21 +224,15 @@
         }
         return html;
       } catch (e) {
-        // localStorage may be disabled (private mode, quota)
         return null;
       }
     }
 
-    /**
-     * Save the app HTML to localStorage with the current timestamp.
-     */
     function setCachedApp(html) {
       try {
         localStorage.setItem(APP_CACHE_KEY, html);
         localStorage.setItem(APP_CACHE_TS_KEY, Date.now().toString());
-      } catch (e) {
-        // Ignore quota / private mode errors
-      }
+      } catch (e) { /* ignore */ }
     }
 
     function injectHtml(html) {
@@ -272,14 +299,12 @@
         if (authResult.property_name) sessionStorage.setItem('property_name', authResult.property_name);
         if (authResult.spreadsheet_id) sessionStorage.setItem('spreadsheet_id', authResult.spreadsheet_id);
 
-        // Try cache first
         var cachedHtml = getCachedApp();
         if (cachedHtml) {
           bootApp(cachedHtml);
           return;
         }
 
-        // Cache miss — fetch from backend
         bootRender('<span class="spinner"></span> Carregando aplicação...', 'loading');
 
         return apiCall('renderApp', { sessionToken: authResult.session_token });
@@ -291,20 +316,11 @@
           return;
         }
 
-        // Save to cache and boot
         setCachedApp(appResult.html);
 
-        if (appResult.property) {
-          window.__ukeepInitialProperty = appResult.property;
-        }
-
-        if (appResult.lang) {
-          window.__ukeepLang = appResult.lang;
-        }
-
-        if (appResult.dictionary) {
-          window.__ukeepDict = appResult.dictionary;
-        }
+        if (appResult.property) window.__ukeepInitialProperty = appResult.property;
+        if (appResult.lang) window.__ukeepLang = appResult.lang;
+        if (appResult.dictionary) window.__ukeepDict = appResult.dictionary;
 
         bootApp(appResult.html);
 
@@ -312,19 +328,19 @@
         bootRender('Erro inesperado: ' + err.message, 'error');
       });
     }
+
     // ---- PWA: detecção de plataforma ----
     window.ukeepIsIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     window.ukeepIsStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       window.navigator.standalone === true;
 
-    // Mostra dica iOS quando aplicável (Safari não dispara beforeinstallprompt)
     if (window.ukeepIsIOS && !window.ukeepIsStandalone) {
       var hint = document.getElementById('ukeep-ios-hint');
       if (hint) hint.style.display = 'block';
     }
 
-    // Exibe botão de instalação quando PWA está instalável
+    // Chrome/Edge: só dispara se o SW estiver ativo e o manifest válido.
     window.addEventListener('beforeinstallprompt', function (e) {
       e.preventDefault();
       window.deferredPrompt = e;
@@ -332,7 +348,6 @@
       if (btn) btn.style.display = 'block';
     });
 
-    // Handler do botão de instalação
     function ukeepInstall() {
       var btn = document.getElementById('ukeep-install-btn');
       if (window.deferredPrompt) {
@@ -347,27 +362,11 @@
     }
     window.ukeepInstall = ukeepInstall;
 
-    // Ocultar botão se já instalado
     window.addEventListener('appinstalled', function () {
       var btn = document.getElementById('ukeep-install-btn');
       if (btn) btn.style.display = 'none';
       window.deferredPrompt = null;
     });
-
-    // ---- PWA: registrar o Service Worker (obrigatório para instalação) ----
-    // Sem um SW com handler `fetch`, o Chrome/Edge NÃO disparam
-    // beforeinstallprompt e o app nunca fica instalável.
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./sw.js', { scope: './' })
-          .then(function (reg) {
-            console.log('[uKeep] Service Worker registrado:', reg.scope);
-          })
-          .catch(function (err) {
-            console.warn('[uKeep] Falha ao registrar Service Worker:', err);
-          });
-      });
-    }
 
     boot();
   </script>
