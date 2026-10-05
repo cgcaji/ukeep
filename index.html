@@ -1,12 +1,24 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="uKeep">
+  <meta name="theme-color" content="#0f172a">
   <title>uKeep | Manutenção Predial</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -32,7 +44,7 @@
     .boot-card {
       background: white;
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       padding: 32px;
       max-width: 640px;
       width: 100%;
@@ -57,9 +69,21 @@
       font-size: 0.95rem;
       line-height: 1.5;
     }
-    .state.error { background: #ffdede; color: #991b1b; }
-    .state.success { background: #d4f8e8; color: #217a3a; }
-    .state.loading { background: #eff6ff; color: #1e40af; }
+
+    .state.error {
+      background: #ffdede;
+      color: #991b1b;
+    }
+
+    .state.success {
+      background: #d4f8e8;
+      color: #217a3a;
+    }
+
+    .state.loading {
+      background: #eff6ff;
+      color: #1e40af;
+    }
 
     .spinner {
       border: 3px solid #e2e8f0;
@@ -72,7 +96,12 @@
       vertical-align: middle;
       margin-right: 10px;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
     code {
       background: #f1f5f9;
@@ -82,6 +111,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="boot-card">
     <h1>uKeep</h1>
@@ -91,6 +121,13 @@
         <span class="spinner"></span> Iniciando...
       </div>
     </div>
+    <button id="ukeep-install-btn" onclick="ukeepInstall()" style="display:none;margin-top:16px;padding:10px 16px;border:0;border-radius:8px;
+             background:#0f172a;color:#fff;font-size:0.9rem;cursor:pointer;">
+      📲 Instalar aplicativo
+    </button>
+    <p id="ukeep-ios-hint" style="display:none;margin-top:12px;color:#64748b;font-size:0.85rem;text-align:center;">
+      Para instalar no iPhone: toque em <strong>Compartilhar</strong> → <strong>Adicionar à Tela de Início</strong>.
+    </p>
   </div>
 
   <script>
@@ -259,14 +296,54 @@
           window.__ukeepInitialProperty = appResult.property;
         }
 
+        if (appResult.lang) {
+          window.__ukeepLang = appResult.lang;
+        }
+
+        if (appResult.dictionary) {
+          window.__ukeepDict = appResult.dictionary;
+        }
+
         bootApp(appResult.html);
 
       }).catch(function (err) {
         bootRender('Erro inesperado: ' + err.message, 'error');
       });
     }
+    // Mostra dica iOS quando aplicável
+    if (window.ukeepIsIOS && !window.ukeepIsStandalone) {
+      var hint = document.getElementById('ukeep-ios-hint');
+      if (hint) hint.style.display = 'block';
+    }
 
+    // Exibe botão de instalação quando PWA está instalável
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      window.deferredPrompt = e;
+      var btn = document.getElementById('ukeep-install-btn');
+      if (btn) btn.style.display = 'block';
+    });
+
+    // Handler do botão de instalação
+    function ukeepInstall() {
+      var btn = document.getElementById('ukeep-install-btn');
+      if (window.deferredPrompt) {
+        window.deferredPrompt.prompt();
+        window.deferredPrompt.userChoice.then(function (choice) {
+          if (choice.outcome === 'accepted') {
+            if (btn) btn.style.display = 'none';
+          }
+        });
+      }
+    }
+    // Ocultar botão se já instalado
+    window.addEventListener('appinstalled', function () {
+      var btn = document.getElementById('ukeep-install-btn');
+      if (btn) btn.style.display = 'none';
+      window.deferredPrompt = null;
+    });
     boot();
   </script>
 </body>
+
 </html>
