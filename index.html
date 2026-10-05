@@ -13,6 +13,8 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./icon-192.png">
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%230f172a'/%3E%3Ctext x='96' y='120' font-size='96' text-anchor='middle' fill='white' font-family='sans-serif'%3EuK%3C/text%3E%3C/svg%3E">
   <style>
     * {
       box-sizing: border-box;
@@ -310,7 +312,13 @@
         bootRender('Erro inesperado: ' + err.message, 'error');
       });
     }
-    // Mostra dica iOS quando aplicável
+    // ---- PWA: detecção de plataforma ----
+    window.ukeepIsIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    window.ukeepIsStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true;
+
+    // Mostra dica iOS quando aplicável (Safari não dispara beforeinstallprompt)
     if (window.ukeepIsIOS && !window.ukeepIsStandalone) {
       var hint = document.getElementById('ukeep-ios-hint');
       if (hint) hint.style.display = 'block';
@@ -333,15 +341,34 @@
           if (choice.outcome === 'accepted') {
             if (btn) btn.style.display = 'none';
           }
+          window.deferredPrompt = null;
         });
       }
     }
+    window.ukeepInstall = ukeepInstall;
+
     // Ocultar botão se já instalado
     window.addEventListener('appinstalled', function () {
       var btn = document.getElementById('ukeep-install-btn');
       if (btn) btn.style.display = 'none';
       window.deferredPrompt = null;
     });
+
+    // ---- PWA: registrar o Service Worker (obrigatório para instalação) ----
+    // Sem um SW com handler `fetch`, o Chrome/Edge NÃO disparam
+    // beforeinstallprompt e o app nunca fica instalável.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .then(function (reg) {
+            console.log('[uKeep] Service Worker registrado:', reg.scope);
+          })
+          .catch(function (err) {
+            console.warn('[uKeep] Falha ao registrar Service Worker:', err);
+          });
+      });
+    }
+
     boot();
   </script>
 </body>

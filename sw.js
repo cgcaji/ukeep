@@ -10,8 +10,18 @@ const SHELL_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => {
+      // Cacheia cada asset individualmente para que a ausência de um ícone
+      // (ex.: icon-192.png ainda não publicado) NÃO aborte a instalação do
+      // service worker — o que impediria o app de ser instalável.
+      return Promise.all(
+        SHELL_ASSETS.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn('[uKeep SW] Falha ao cachear', url, err);
+          })
+        )
+      );
+    }).then(() => self.skipWaiting())
   );
 });
 
