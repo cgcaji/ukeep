@@ -36,16 +36,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
-  // Nunca cachear chamadas ao backend (Apps Script)
   if (req.url.includes('script.google.com')) return;
-
-  // Só tratar GET
   if (req.method !== 'GET') return;
 
   event.respondWith(
     caches.match(req).then((cached) => {
       const network = fetch(req).then((res) => {
-        // Atualiza cache em background para assets do shell
         if (res && res.ok && new URL(req.url).origin === self.location.origin) {
           const clone = res.clone();
           caches.open(CACHE_NAME).then((c) => c.put(req, clone));
@@ -53,9 +49,10 @@ self.addEventListener('fetch', (event) => {
         return res;
       }).catch(() => cached);
 
-      // Network-first para o index.html (para pegar atualizações), cache-first para o resto
+      // Network-first para o index.html (pega atualizações); se a rede
+      // falhar, cai para o cache (offline) em vez de rejeitar.
       if (req.mode === 'navigate' || req.url.endsWith('index.html')) {
-        return network;
+        return network.then((res) => res || cached);
       }
       return cached || network;
     })
