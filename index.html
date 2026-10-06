@@ -235,6 +235,26 @@
       } catch (e) { /* ignore */ }
     }
 
+    // Boot metadata (the initial property) persisted alongside the session so a
+    // cache-hit boot can render the property screen without an extra
+    // `getProperty` round-trip. Session-scoped (sessionStorage) because it
+    // carries property PII, matching the app's own domain-cache policy.
+    var APP_BOOT_META_KEY = 'ukeep_boot_meta';
+
+    function setBootMeta(meta) {
+      try { sessionStorage.setItem(APP_BOOT_META_KEY, JSON.stringify(meta || {})); }
+      catch (e) { /* ignore */ }
+    }
+
+    function applyBootMeta() {
+      try {
+        var raw = sessionStorage.getItem(APP_BOOT_META_KEY);
+        if (!raw) return;
+        var meta = JSON.parse(raw);
+        if (meta && meta.property) window.__ukeepInitialProperty = meta.property;
+      } catch (e) { /* ignore */ }
+    }
+
     function injectHtml(html) {
       var range = document.createRange();
       range.selectNode(document.body);
@@ -294,6 +314,10 @@
         sessionStorage.setItem('session_token', authResult.session_token);
         sessionStorage.setItem('profile', authResult.profile);
         sessionStorage.setItem('person_id', authResult.person_id);
+        // `auth` already mints a fresh session whose acting_profile is the real
+        // profile, so persisting it here lets the app skip a redundant `me`
+        // round-trip during boot (see syncActingProfile).
+        sessionStorage.setItem('acting_profile', authResult.acting_profile || authResult.profile);
         if (authResult.source) sessionStorage.setItem('source', authResult.source);
         if (authResult.property_id) sessionStorage.setItem('property_id', authResult.property_id);
         if (authResult.property_name) sessionStorage.setItem('property_name', authResult.property_name);
@@ -301,6 +325,7 @@
 
         var cachedHtml = getCachedApp();
         if (cachedHtml) {
+          applyBootMeta();
           bootApp(cachedHtml);
           return;
         }
@@ -317,6 +342,7 @@
         }
 
         setCachedApp(appResult.html);
+        setBootMeta({ property: appResult.property || null });
 
         if (appResult.property) window.__ukeepInitialProperty = appResult.property;
         if (appResult.lang) window.__ukeepLang = appResult.lang;
