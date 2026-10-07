@@ -64,6 +64,28 @@
       margin-bottom: 24px;
     }
 
+    /* Splash (autenticação + carregamento da interface): tela cheia, SEM card
+       — apenas o brand + o spinner unificado do app. O card volta a aparecer
+       nos estados de boas-vindas/erro (quando o body perde .ukeep-splash). */
+    body.ukeep-splash .boot-card {
+      background: transparent;
+      box-shadow: none;
+      padding: 0;
+      max-width: none;
+      width: auto;
+      text-align: center;
+    }
+
+    body.ukeep-splash .boot-card h1 {
+      font-size: 2.5rem;
+      margin-bottom: 6px;
+    }
+
+    body.ukeep-splash .boot-card .subtitle {
+      font-size: 1rem;
+      margin-bottom: 32px;
+    }
+
     .state {
       padding: 20px;
       border-radius: 8px;
@@ -134,7 +156,7 @@
   </style>
 </head>
 
-<body>
+<body class="ukeep-splash">
   <div class="boot-card">
     <h1>uKeep</h1>
     <p class="subtitle">Manutenção Predial</p>
@@ -202,6 +224,9 @@
       if (el) {
         el.innerHTML = '<div class="state ' + (stateClass || '') + '">' + html + '</div>';
       }
+      // Splash only while loading; the welcome/error states go back to the
+      // card (see body.ukeep-splash in the stylesheet).
+      document.body.classList.toggle('ukeep-splash', stateClass === 'loading');
     }
 
     function getQueryParam(name) {
