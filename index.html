@@ -82,20 +82,18 @@
       color: #217a3a;
     }
 
-    /* Loading = overlay full-screen, SEM card: spinner + texto centralizados.
-       O fundo opaco cobre o boot-card (boas-vindas/erro continuam no card). */
+    /* Loading = mesma splash com o brand (o boot-card do uKeep permanece
+       visível), apenas com o spinner unificado do app + texto centralizados.
+       NÃO cobre a tela: a tela de autenticação/carregamento mantém o brand. */
     .state.loading {
-      position: fixed;
-      inset: 0;
-      z-index: 100000;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 14px;
-      background: #f4f4f4;
+      gap: 12px;
+      background: transparent;
       color: #1e40af;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       border-radius: 0;
       padding: 20px;
