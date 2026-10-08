@@ -328,31 +328,79 @@
     function boot() {
       var key = getQueryParam('k');
 
+      // No key in the URL: welcome screen with a field so users who saved
+      // their key can type/paste it (raw key only).
       if (!key) {
-        bootRender(
-          '<strong>Bem-vindo.</strong><br><br>' +
-          'Para acessar o sistema, use o link enviado pelo seu coordenador ' +
-          'ou supervisor.<br><br>' +
-          'O link contém uma chave pessoal no formato <code>?k=...</code>.',
-          'success'
-        );
+        renderKeyForm('');
         return;
       }
 
+      authenticateWithKey(key);
+    }
+
+    // Welcome screen rendered when no ?k= link is present. `errorMessage`, when
+    // set, is shown below the field (used on validation/auth failure).
+    function renderKeyForm(errorMessage) {
+      var inputStyle = 'width:100%;box-sizing:border-box;padding:12px;' +
+        'border:1px solid #cbd5e1;border-radius:8px;font-size:1rem;';
+      var buttonStyle = 'width:100%;margin-top:10px;padding:12px;border:0;' +
+        'border-radius:8px;background:#0f172a;color:#fff;font-size:1rem;' +
+        'font-weight:600;cursor:pointer;';
+
+      bootRender(
+        '<strong>Bem-vindo.</strong><br><br>' +
+        'Digite ou cole sua chave de acesso para entrar:' +
+        '<div style="margin-top:12px;">' +
+        '<input id="ukeep-key-input" type="text" autocomplete="off" ' +
+        'autocapitalize="off" spellcheck="false" ' +
+        'placeholder="Cole aqui sua chave de acesso" style="' + inputStyle + '">' +
+        '<button id="ukeep-key-submit" type="button" style="' + buttonStyle + '">Entrar</button>' +
+        '</div>' +
+        (errorMessage
+          ? '<div style="margin-top:12px;color:#991b1b;font-size:0.9rem;">' + errorMessage + '</div>'
+          : '') +
+        '<p style="margin:16px 0 0;font-size:0.85rem;color:#64748b;">' +
+        'Você também pode entrar pelo link enviado pelo seu coordenador ou supervisor.</p>',
+        'success'
+      );
+
+      var input = document.getElementById('ukeep-key-input');
+      var button = document.getElementById('ukeep-key-submit');
+
+      function submit() {
+        var value = (input.value || '').trim();
+        if (!value) {
+          renderKeyForm('Informe sua chave de acesso.');
+          return;
+        }
+        authenticateWithKey(value);
+      }
+
+      button.addEventListener('click', submit);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') submit();
+      });
+      input.focus();
+    }
+
+    // Shared authentication sequence for both entry points (the ?k= link and
+    // the manual key form).
+    function authenticateWithKey(key) {
       bootRender('<span class="spinner"></span> Autenticando...', 'loading');
 
       apiCall('auth', { k: key }).then(function (authResult) {
         if (!authResult.success) {
           var message = 'Não foi possível autenticar.';
           if (authResult.error === 'invalid_key') {
-            message += '<br><br>A chave é inválida ou expirou.';
-            message += '<br>Solicite um novo link ao seu coordenador ou supervisor.';
+            message = 'Chave inválida ou expirada. Confira a chave e tente de novo, ' +
+              'ou solicite um novo link ao seu coordenador ou supervisor.';
           } else if (authResult.error === 'network_error') {
-            message += '<br><br>Erro de rede ou bloqueio do navegador.';
+            message = 'Erro de rede ou bloqueio do navegador. Tente novamente.';
           } else {
-            message += '<br><br><small>Erro: ' + (authResult.error || 'desconhecido') + '</small>';
+            message = 'Não foi possível autenticar. ' +
+              '<small>Erro: ' + (authResult.error || 'desconhecido') + '</small>';
           }
-          bootRender(message, 'error');
+          renderKeyForm(message);
           return;
         }
 
@@ -396,7 +444,7 @@
         bootApp(appResult.html);
 
       }).catch(function (err) {
-        bootRender('Erro inesperado: ' + err.message, 'error');
+        renderKeyForm('Erro inesperado: ' + err.message);
       });
     }
 

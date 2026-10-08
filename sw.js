@@ -1,5 +1,5 @@
 // uKeep Service Worker — habilita instalação PWA e cache básico
-const CACHE_NAME = 'ukeep-shell-v1';
+const CACHE_NAME = 'ukeep-shell-v2';
 const SHELL_ASSETS = [
   './',
   './index.html',
