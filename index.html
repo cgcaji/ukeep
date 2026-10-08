@@ -280,24 +280,34 @@
       } catch (e) { /* ignore */ }
     }
 
-    // Boot metadata (the initial property) persisted alongside the session so a
-    // cache-hit boot can render the property screen without an extra
-    // `getProperty` round-trip. Session-scoped (sessionStorage) because it
-    // carries property PII, matching the app's own domain-cache policy.
-    var APP_BOOT_META_KEY = 'ukeep_boot_meta';
+    // Primes the one-shot globals the in-app first paint consumes — property,
+    // active campaigns, own profile — plus the i18n bundle, so the app boots
+    // straight to content without follow-up round-trips. `window` globals
+    // survive the DOM injection performed by bootApp.
+    //
+    // Every global is cleared first so a fresh session can never inherit stale
+    // data from a previous one in the same tab.
+    function primeBootPayload(res) {
+      window.__ukeepInitialProperty = null;
+      window.__ukeepInitialCampaigns = null;
+      window.__ukeepInitialProfile = null;
 
-    function setBootMeta(meta) {
-      try { sessionStorage.setItem(APP_BOOT_META_KEY, JSON.stringify(meta || {})); }
-      catch (e) { /* ignore */ }
-    }
+      if (!res) return;
 
-    function applyBootMeta() {
-      try {
-        var raw = sessionStorage.getItem(APP_BOOT_META_KEY);
-        if (!raw) return;
-        var meta = JSON.parse(raw);
-        if (meta && meta.property) window.__ukeepInitialProperty = meta.property;
-      } catch (e) { /* ignore */ }
+      // The app reads `window.__ukeepI18n` (bootstrapI18n) — priming it here is
+      // what removes the extra `i18n` round-trip on a cache-hit boot.
+      if (res.i18n) {
+        window.__ukeepI18n = {
+          lang: res.i18n.lang,
+          default_lang: res.i18n.default_lang,
+          supported_langs: res.i18n.supported_langs,
+          dictionary: res.i18n.dictionary || {}
+        };
+      }
+
+      if (res.property) window.__ukeepInitialProperty = res.property;
+      if (res.campaigns) window.__ukeepInitialCampaigns = res.campaigns;
+      if (res.user_profile) window.__ukeepInitialProfile = res.user_profile;
     }
 
     function injectHtml(html) {
@@ -384,65 +394,65 @@
     }
 
     // Shared authentication sequence for both entry points (the ?k= link and
-    // the manual key form).
+    // the manual key form). Uses the aggregated `bootstrap` action so the whole
+    // first screen — session, i18n, property, profile and active campaigns —
+    // arrives in a single Apps Script round-trip. Each GAS call pays a 302
+    // redirect + cold start, so collapsing the waterfall is what makes boot
+    // fast (previously auth -> renderApp -> listCampaigns, sequential).
     function authenticateWithKey(key) {
       bootRender('<span class="spinner"></span> Autenticando...', 'loading');
 
-      apiCall('auth', { k: key }).then(function (authResult) {
-        if (!authResult.success) {
+      // Decide the cache state BEFORE the call so we only pull the ~385KB app
+      // HTML when we don't already have it cached.
+      var cachedHtml = getCachedApp();
+      var params = { k: key };
+      if (!cachedHtml) params.includeHtml = 1;
+
+      apiCall('bootstrap', params).then(function (res) {
+        if (!res || !res.success) {
+          var error = (res && res.error) || 'desconhecido';
           var message = 'Não foi possível autenticar.';
-          if (authResult.error === 'invalid_key') {
+          if (error === 'invalid_key') {
             message = 'Chave inválida ou expirada. Confira a chave e tente de novo, ' +
               'ou solicite um novo link ao seu coordenador ou supervisor.';
-          } else if (authResult.error === 'network_error') {
+          } else if (error === 'network_error') {
             message = 'Erro de rede ou bloqueio do navegador. Tente novamente.';
           } else {
             message = 'Não foi possível autenticar. ' +
-              '<small>Erro: ' + (authResult.error || 'desconhecido') + '</small>';
+              '<small>Erro: ' + error + '</small>';
           }
           renderKeyForm(message);
           return;
         }
 
-        sessionStorage.setItem('session_token', authResult.session_token);
-        sessionStorage.setItem('profile', authResult.profile);
-        sessionStorage.setItem('person_id', authResult.person_id);
-        // `auth` already mints a fresh session whose acting_profile is the real
+        var auth = res.auth || {};
+
+        sessionStorage.setItem('session_token', auth.session_token);
+        sessionStorage.setItem('profile', auth.profile);
+        sessionStorage.setItem('person_id', auth.person_id);
+        // `bootstrap` mints a fresh session whose acting_profile is the real
         // profile, so persisting it here lets the app skip a redundant `me`
         // round-trip during boot (see syncActingProfile).
-        sessionStorage.setItem('acting_profile', authResult.acting_profile || authResult.profile);
-        if (authResult.source) sessionStorage.setItem('source', authResult.source);
-        if (authResult.property_id) sessionStorage.setItem('property_id', authResult.property_id);
-        if (authResult.property_name) sessionStorage.setItem('property_name', authResult.property_name);
-        if (authResult.spreadsheet_id) sessionStorage.setItem('spreadsheet_id', authResult.spreadsheet_id);
+        sessionStorage.setItem('acting_profile', auth.acting_profile || auth.profile);
+        if (auth.source) sessionStorage.setItem('source', auth.source);
+        if (auth.property_id) sessionStorage.setItem('property_id', auth.property_id);
+        if (auth.property_name) sessionStorage.setItem('property_name', auth.property_name);
+        if (auth.spreadsheet_id) sessionStorage.setItem('spreadsheet_id', auth.spreadsheet_id);
 
-        var cachedHtml = getCachedApp();
-        if (cachedHtml) {
-          applyBootMeta();
-          bootApp(cachedHtml);
+        // Feed the in-app first paint (and i18n) before the app script runs.
+        primeBootPayload(res);
+
+        var html = cachedHtml;
+        if (!html && res.html) {
+          html = res.html;
+          setCachedApp(html);
+        }
+        if (!html) {
+          bootRender('Falha ao carregar a aplicação. Tente novamente.', 'error');
           return;
         }
 
-        bootRender('<span class="spinner"></span> Carregando aplicação...', 'loading');
-
-        return apiCall('renderApp', { sessionToken: authResult.session_token });
-      }).then(function (appResult) {
-        if (!appResult) return;
-
-        if (!appResult.success || !appResult.html) {
-          bootRender('Falha ao carregar a aplicação: ' + (appResult.error || 'desconhecido'), 'error');
-          return;
-        }
-
-        setCachedApp(appResult.html);
-        setBootMeta({ property: appResult.property || null });
-
-        if (appResult.property) window.__ukeepInitialProperty = appResult.property;
-        if (appResult.lang) window.__ukeepLang = appResult.lang;
-        if (appResult.dictionary) window.__ukeepDict = appResult.dictionary;
-
-        bootApp(appResult.html);
-
+        bootApp(html);
       }).catch(function (err) {
         renderKeyForm('Erro inesperado: ' + err.message);
       });
